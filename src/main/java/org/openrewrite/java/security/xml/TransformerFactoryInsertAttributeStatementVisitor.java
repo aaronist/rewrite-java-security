@@ -24,8 +24,7 @@ import org.openrewrite.java.tree.Statement;
 
 public class TransformerFactoryInsertAttributeStatementVisitor<P> extends JavaIsoVisitor<P> {
     private final J.Block scope;
-    private final StringBuilder propertyTemplate = new StringBuilder();
-    private final ExternalDTDAccumulator acc;
+    private final StringBuilder attributeTemplate = new StringBuilder();
     private final String transformerFactoryVariableName;
 
     public TransformerFactoryInsertAttributeStatementVisitor(
@@ -33,17 +32,19 @@ public class TransformerFactoryInsertAttributeStatementVisitor<P> extends JavaIs
             String factoryVariableName,
             boolean needsExternalEntitiesDisabled,
             boolean needsStylesheetsDisabled,
-            ExternalDTDAccumulator acc
+            boolean needsFeatureSecureProcessing
     ) {
         this.scope = scope;
         this.transformerFactoryVariableName = factoryVariableName;
-        this.acc = acc;
 
         if (needsExternalEntitiesDisabled) {
-            propertyTemplate.append(transformerFactoryVariableName).append(".setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, \"\");");
+            attributeTemplate.append(transformerFactoryVariableName).append(".setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, \"\");");
         }
         if (needsStylesheetsDisabled) {
-            propertyTemplate.append(transformerFactoryVariableName).append(".setAttribute(XMLConstants.ACCESS_EXTERNAL_STYLESHEET, \"\");");
+            attributeTemplate.append(transformerFactoryVariableName).append(".setAttribute(XMLConstants.ACCESS_EXTERNAL_STYLESHEET, \"\");");
+        }
+        if (needsFeatureSecureProcessing) {
+            attributeTemplate.append(transformerFactoryVariableName).append(".setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);");
         }
     }
 
@@ -72,16 +73,18 @@ public class TransformerFactoryInsertAttributeStatementVisitor<P> extends JavaIs
             }
 
             if (getCursor().getParent() != null && getCursor().getParent().getValue() instanceof J.ClassDeclaration) {
-                propertyTemplate.insert(0, "{\n").append("}");
+                attributeTemplate.insert(0, "{").append("}");
             }
             JavaCoordinates insertCoordinates = beforeStatement != null ?
                     beforeStatement.getCoordinates().before() :
                     b.getCoordinates().lastStatement();
             b = JavaTemplate
-                    .builder(propertyTemplate.toString())
+                    .builder(attributeTemplate.toString())
+                    .imports("javax.xml.XMLConstants")
                     .contextSensitive()
                     .build()
                     .apply(new Cursor(getCursor().getParent(), b), insertCoordinates);
+            maybeAddImport("javax.xml.XMLConstants");
         }
         return b;
     }
