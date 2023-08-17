@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 the original author or authors.
+ * Copyright 2023 the original author or authors.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,10 @@
  */
 package org.openrewrite.java.security.xml;
 
-import lombok.AllArgsConstructor;
 import org.openrewrite.Cursor;
 import org.openrewrite.ExecutionContext;
 import org.openrewrite.Preconditions;
 import org.openrewrite.TreeVisitor;
-import org.openrewrite.java.JavaIsoVisitor;
 import org.openrewrite.java.MethodMatcher;
 import org.openrewrite.java.search.UsesType;
 import org.openrewrite.java.tree.J;
@@ -28,8 +26,7 @@ import org.openrewrite.java.tree.TypeUtils;
 
 import javax.xml.stream.XMLInputFactory;
 
-@AllArgsConstructor
-public class XmlInputFactoryFixVisitor<P> extends JavaIsoVisitor<P> {
+public class XmlInputFactoryFixVisitor<P> extends XmlFactoryVisitor<P> {
 
     static final MethodMatcher XML_PARSER_FACTORY_INSTANCE = new MethodMatcher("javax.xml.stream.XMLInputFactory new*()");
     static final MethodMatcher XML_PARSER_FACTORY_SET_PROPERTY = new MethodMatcher("javax.xml.stream.XMLInputFactory setProperty(java.lang.String, ..)");
@@ -45,10 +42,18 @@ public class XmlInputFactoryFixVisitor<P> extends JavaIsoVisitor<P> {
 
     private static final String XML_RESOLVER_METHOD = "xml-resolver-initialization-method";
 
-    private final ExternalDTDAccumulator acc;
+    public XmlInputFactoryFixVisitor(ExternalDTDAccumulator acc) {
+        super(
+                XML_PARSER_FACTORY_INSTANCE,
+                XML_FACTORY_FQN,
+                XML_PARSER_INITIALIZATION_METHOD,
+                XML_FACTORY_VARIABLE_NAME,
+                acc
+        );
+    }
+
     @Override
     public J.ClassDeclaration visitClassDeclaration(J.ClassDeclaration classDecl, P ctx) {
-
         J.ClassDeclaration cd = super.visitClassDeclaration(classDecl, ctx);
         Cursor supportsExternalCursor = getCursor().getMessage(SUPPORTING_EXTERNAL_ENTITIES_PROPERTY_NAME);
         Cursor supportsFalseDTDCursor = getCursor().getMessage(SUPPORT_DTD_FALSE_PROPERTY_NAME);
@@ -60,7 +65,6 @@ public class XmlInputFactoryFixVisitor<P> extends JavaIsoVisitor<P> {
         Cursor setPropertyBlockCursor = null;
         if (supportsExternalCursor == null && supportsFalseDTDCursor == null) {
             setPropertyBlockCursor = initializationCursor;
-
         } else if (supportsExternalCursor == null ^ supportsFalseDTDCursor == null) {
             setPropertyBlockCursor = supportsExternalCursor == null ? supportsFalseDTDCursor : supportsExternalCursor;
         }
@@ -70,30 +74,19 @@ public class XmlInputFactoryFixVisitor<P> extends JavaIsoVisitor<P> {
                     xmlFactoryVariableName,
                     supportsExternalCursor == null,
                     supportsFalseDTDCursor == null,
-                    acc.getExternalDTDs().isEmpty(),
+                    getAcc().getExternalDTDs().isEmpty(),
                     supportsDTDTrueCursor == null,
                     xmlResolverMethod == null,
-                    acc
+                    getAcc()
             ));
         }
         return cd;
     }
 
     @Override
-    public J.VariableDeclarations.NamedVariable visitVariable(J.VariableDeclarations.NamedVariable variable, P ctx) {
-        J.VariableDeclarations.NamedVariable v = super.visitVariable(variable, ctx);
-        if (TypeUtils.isOfClassType(v.getType(), XML_FACTORY_FQN)) {
-            getCursor().putMessageOnFirstEnclosing(J.ClassDeclaration.class, XML_FACTORY_VARIABLE_NAME, v.getSimpleName());
-        }
-        return v;
-    }
-
-    @Override
     public J.MethodInvocation visitMethodInvocation(J.MethodInvocation method, P ctx) {
         J.MethodInvocation m = super.visitMethodInvocation(method, ctx);
-        if (XML_PARSER_FACTORY_INSTANCE.matches(m)) {
-            getCursor().putMessageOnFirstEnclosing(J.ClassDeclaration.class, XML_PARSER_INITIALIZATION_METHOD, getCursor().dropParentUntil(J.Block.class::isInstance));
-        } else if (XML_PARSER_FACTORY_SET_PROPERTY.matches(m) && m.getArguments().get(0) instanceof J.FieldAccess) {
+        if (XML_PARSER_FACTORY_SET_PROPERTY.matches(m) && m.getArguments().get(0) instanceof J.FieldAccess) {
             J.FieldAccess fa = (J.FieldAccess) m.getArguments().get(0);
             if (SUPPORTING_EXTERNAL_ENTITIES_PROPERTY_NAME.equals(fa.getSimpleName())) {
                 getCursor().putMessageOnFirstEnclosing(J.ClassDeclaration.class, SUPPORTING_EXTERNAL_ENTITIES_PROPERTY_NAME, getCursor().dropParentUntil(J.Block.class::isInstance));
@@ -113,8 +106,6 @@ public class XmlInputFactoryFixVisitor<P> extends JavaIsoVisitor<P> {
             getCursor().putMessageOnFirstEnclosing(J.ClassDeclaration.class, XML_RESOLVER_METHOD, getCursor().dropParentUntil((J.Block.class::isInstance)));
         }
         return m;
-
-
     }
 
     private void checkDTDSupport(J.MethodInvocation m) {
