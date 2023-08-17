@@ -30,8 +30,8 @@ import java.util.Set;
 @AllArgsConstructor
 @Getter
 public abstract class XmlFactoryInsertVisitor<P> extends JavaIsoVisitor<P> {
+    private final StringBuilder template = new StringBuilder();
     private final J.Block scope;
-    private final StringBuilder template;
     private final String factoryVariableName;
     private final MethodMatcher factoryInstanceMatcher;
     private final MethodMatcher factoryMethodCallMatcher;
@@ -65,7 +65,7 @@ public abstract class XmlFactoryInsertVisitor<P> extends JavaIsoVisitor<P> {
         return s != null ? s.getCoordinates().before() : b.getCoordinates().lastStatement();
     }
 
-    public J.Block updateTemplate(J.Block b, J.Block block, Statement beforeStatement, Set<String> imports) {
+    public J.Block updateBlock(J.Block b, J.Block block, Statement beforeStatement, Set<String> imports) {
         if (getCursor().getParent() != null && getCursor().getParent().getValue() instanceof J.ClassDeclaration) {
             template.insert(0, "{\n").append("}");
         }

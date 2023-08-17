@@ -41,7 +41,6 @@ class XmlFactoryInsertPropertyStatementVisitor<P> extends XmlFactoryInsertVisito
     ) {
         super(
                 scope,
-                new StringBuilder(),
                 factoryVariableName,
                 XmlInputFactoryFixVisitor.XML_PARSER_FACTORY_INSTANCE,
                 XmlInputFactoryFixVisitor.XML_PARSER_FACTORY_SET_PROPERTY
@@ -118,7 +117,7 @@ class XmlFactoryInsertPropertyStatementVisitor<P> extends XmlFactoryInsertVisito
         Statement beforeStatement = getInsertStatement(b);
         if (b.isScope(getScope())) {
             Set<String> imports = addAllowList(generateAllowList);
-            b = updateTemplate(b, block, beforeStatement, imports);
+            b = updateBlock(b, block, beforeStatement, imports);
         }
         return b;
     }
