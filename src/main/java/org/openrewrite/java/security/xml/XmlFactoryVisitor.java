@@ -51,4 +51,13 @@ public abstract class XmlFactoryVisitor<P> extends JavaIsoVisitor<P> {
         }
         return m;
     }
+
+    /**
+     * Adds a message/flag on the first enclosing class instance.
+     *
+     * @param message The message to be added.
+     */
+    public void addMessage(String message) {
+        getCursor().putMessageOnFirstEnclosing(J.ClassDeclaration.class, message, getCursor().dropParentUntil(J.Block.class::isInstance));
+    }
 }
