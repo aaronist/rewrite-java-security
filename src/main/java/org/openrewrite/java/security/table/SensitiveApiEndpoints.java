@@ -48,6 +48,10 @@ public class SensitiveApiEndpoints extends DataTable<SensitiveApiEndpoints.Row> 
                 description = "The path of the API endpoint.")
         String path;
 
+        @Column(displayName = "Sensitive field",
+                description = "The piece of sensitive data that is included.")
+        String sensitiveField;
+
         @Column(displayName = "Sensitive data path",
                 description = "The sensitive data exposed by the API endpoint.")
         String sensitiveDataPath;

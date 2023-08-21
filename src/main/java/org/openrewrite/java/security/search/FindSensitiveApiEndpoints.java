@@ -90,11 +90,13 @@ public class FindSensitiveApiEndpoints extends Recipe {
                         .collect(toList());
 
                 for (String sensitivePath : sensitivePaths) {
+                    String fieldName = sensitivePaths.get(sensitivePaths.size() - 1);
                     endpoints.insertRow(ctx, new SensitiveApiEndpoints.Row(
                             getCursor().firstEnclosingOrThrow(J.CompilationUnit.class).getSourcePath().toString(),
                             method.getSimpleName(),
                             endpoint.getMethod(),
                             endpoint.getPath(),
+                            fieldName.substring(fieldName.lastIndexOf("#") + 1),
                             sensitivePath
                     ));
                 }
