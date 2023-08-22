@@ -21,7 +21,6 @@ import org.openrewrite.Cursor;
 import org.openrewrite.analysis.InvocationMatcher;
 import org.openrewrite.java.JavaIsoVisitor;
 import org.openrewrite.java.JavaTemplate;
-import org.openrewrite.java.MethodMatcher;
 import org.openrewrite.java.tree.J;
 import org.openrewrite.java.tree.JavaCoordinates;
 import org.openrewrite.java.tree.Statement;
@@ -36,8 +35,11 @@ public abstract class XmlFactoryInsertVisitor<P> extends JavaIsoVisitor<P> {
     private final String factoryVariableName;
     private final InvocationMatcher factoryInstanceMatcher;
     private final InvocationMatcher factoryMethodCallMatcher;
+    private final Set<String> imports;
 
-    public Statement getInsertStatement(J.Block b) {
+    public abstract void generateAdditionalSupport();
+
+    private Statement getInsertStatement(J.Block b) {
         Statement beforeStatement = null;
         if (b.isScope(scope)) {
             for (int i = b.getStatements().size() - 2; i > -1; i--) {
@@ -66,7 +68,7 @@ public abstract class XmlFactoryInsertVisitor<P> extends JavaIsoVisitor<P> {
         return s != null ? s.getCoordinates().before() : b.getCoordinates().lastStatement();
     }
 
-    public J.Block updateBlock(J.Block b, Statement beforeStatement, Set<String> imports) {
+    private J.Block updateBlock(J.Block b, Statement beforeStatement) {
         if (getCursor().getParent() != null && getCursor().getParent().getValue() instanceof J.ClassDeclaration) {
             template.insert(0, "{\n").append("}");
         }
@@ -77,6 +79,17 @@ public abstract class XmlFactoryInsertVisitor<P> extends JavaIsoVisitor<P> {
                 .build()
                 .apply(new Cursor(getCursor().getParent(), b), getInsertCoordinates(b, beforeStatement));
         imports.forEach(this::maybeAddImport);
+        return b;
+    }
+
+    @Override
+    public J.Block visitBlock(J.Block block, P ctx) {
+        J.Block b = super.visitBlock(block, ctx);
+        Statement beforeStatement = getInsertStatement(b);
+        if (b.isScope(scope)) {
+            generateAdditionalSupport();
+            b = updateBlock(b, beforeStatement);
+        }
         return b;
     }
 }

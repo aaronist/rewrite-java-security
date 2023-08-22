@@ -16,7 +16,6 @@
 package org.openrewrite.java.security.xml;
 
 import org.openrewrite.java.tree.J;
-import org.openrewrite.java.tree.Statement;
 
 import java.util.Collections;
 
@@ -32,7 +31,8 @@ public class TransformerFactoryInsertAttributeStatementVisitor<P> extends XmlFac
                 scope,
                 factoryVariableName,
                 TransformerFactoryFixVisitor.TRANSFORMER_FACTORY_INSTANCE,
-                TransformerFactoryFixVisitor.TRANSFORMER_FACTORY_SET_ATTRIBUTE
+                TransformerFactoryFixVisitor.TRANSFORMER_FACTORY_SET_ATTRIBUTE,
+                Collections.singleton("javax.xml.XMLConstants")
         );
 
         if (needsExternalEntitiesDisabled) {
@@ -47,12 +47,6 @@ public class TransformerFactoryInsertAttributeStatementVisitor<P> extends XmlFac
     }
 
     @Override
-    public J.Block visitBlock(J.Block block, P ctx) {
-        J.Block b = super.visitBlock(block, ctx);
-        Statement beforeStatement = getInsertStatement(b);
-        if (b.isScope(getScope())) {
-            b = updateBlock(b, beforeStatement, Collections.singleton("javax.xml.XMLConstants"));
-        }
-        return b;
+    public void generateAdditionalSupport() {
     }
 }

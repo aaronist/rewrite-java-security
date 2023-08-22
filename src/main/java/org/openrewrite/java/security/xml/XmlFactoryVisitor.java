@@ -19,27 +19,26 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.openrewrite.analysis.InvocationMatcher;
 import org.openrewrite.java.JavaIsoVisitor;
-import org.openrewrite.java.MethodMatcher;
 import org.openrewrite.java.tree.J;
 import org.openrewrite.java.tree.TypeUtils;
 
 @AllArgsConstructor
 @Getter
 public abstract class XmlFactoryVisitor<P> extends JavaIsoVisitor<P> {
-    private final InvocationMatcher FACTORY_INSTANCE;
+    private final InvocationMatcher factoryInstance;
 
-    private final String FACTORY_FQN;
+    private final String factoryFqn;
 
-    private final String FACTORY_INITIALIZATION_METHOD;
-    private final String FACTORY_VARIABLE_NAME;
+    private final String factoryInitializationMethod;
+    private final String factoryVariableName;
 
     private final ExternalDTDAccumulator acc;
 
     @Override
     public J.VariableDeclarations.NamedVariable visitVariable(J.VariableDeclarations.NamedVariable variable, P ctx) {
         J.VariableDeclarations.NamedVariable v = super.visitVariable(variable, ctx);
-        if (TypeUtils.isOfClassType(v.getType(), FACTORY_FQN)) {
-            getCursor().putMessageOnFirstEnclosing(J.ClassDeclaration.class, FACTORY_VARIABLE_NAME, v.getSimpleName());
+        if (TypeUtils.isOfClassType(v.getType(), factoryFqn)) {
+            getCursor().putMessageOnFirstEnclosing(J.ClassDeclaration.class, factoryVariableName, v.getSimpleName());
         }
         return v;
     }
@@ -47,8 +46,8 @@ public abstract class XmlFactoryVisitor<P> extends JavaIsoVisitor<P> {
     @Override
     public J.MethodInvocation visitMethodInvocation(J.MethodInvocation method, P ctx) {
         J.MethodInvocation m = super.visitMethodInvocation(method, ctx);
-        if (FACTORY_INSTANCE.matches(m)) {
-            getCursor().putMessageOnFirstEnclosing(J.ClassDeclaration.class, FACTORY_INITIALIZATION_METHOD, getCursor().dropParentUntil(J.Block.class::isInstance));
+        if (factoryInstance.matches(m)) {
+            getCursor().putMessageOnFirstEnclosing(J.ClassDeclaration.class, factoryInitializationMethod, getCursor().dropParentUntil(J.Block.class::isInstance));
         }
         return m;
     }

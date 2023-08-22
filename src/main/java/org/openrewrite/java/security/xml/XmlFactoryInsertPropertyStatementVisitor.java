@@ -17,11 +17,9 @@ package org.openrewrite.java.security.xml;
 
 import org.openrewrite.java.VariableNameUtils;
 import org.openrewrite.java.tree.J;
-import org.openrewrite.java.tree.Statement;
 
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.HashSet;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 class XmlFactoryInsertPropertyStatementVisitor<P> extends XmlFactoryInsertVisitor<P> {
@@ -43,7 +41,13 @@ class XmlFactoryInsertPropertyStatementVisitor<P> extends XmlFactoryInsertVisito
                 scope,
                 factoryVariableName,
                 XmlInputFactoryFixVisitor.XML_PARSER_FACTORY_INSTANCE,
-                XmlInputFactoryFixVisitor.XML_PARSER_FACTORY_SET_PROPERTY
+                XmlInputFactoryFixVisitor.XML_PARSER_FACTORY_SET_PROPERTY,
+                new HashSet<>(Arrays.asList(
+                        "java.util.Collection",
+                        "javax.xml.stream.XMLStreamException",
+                        "java.util.Arrays",
+                        "java.util.Collections"
+                ))
         );
         this.acc = acc;
 
@@ -67,10 +71,10 @@ class XmlFactoryInsertPropertyStatementVisitor<P> extends XmlFactoryInsertVisito
         }
     }
 
-    private Set<String> addAllowList(boolean generateAllowList) {
-        Set<String> imports = new HashSet<>();
+    @Override
+    public void generateAdditionalSupport() {
         if (acc.getExternalDTDs().isEmpty() || !generateAllowList) {
-            return Collections.emptySet();
+            return;
         }
 
         String newAllowListVariableName = VariableNameUtils.generateVariableName(
@@ -78,16 +82,12 @@ class XmlFactoryInsertPropertyStatementVisitor<P> extends XmlFactoryInsertVisito
                 getCursor(),
                 VariableNameUtils.GenerationStrategy.INCREMENT_NUMBER
         );
-        imports.add("java.util.Collection");
-        imports.add("javax.xml.stream.XMLStreamException");
 
         if (acc.getExternalDTDs().size() > 1) {
-            imports.add("java.util.Arrays");
             getTemplate().append(
                     "Collection<String>" + newAllowListVariableName + " = Arrays.asList(\n"
             );
         } else {
-            imports.add("java.util.Collections");
             getTemplate().append(
                     "Collection<String>" + newAllowListVariableName + " = Collections.singleton(\n"
             );
@@ -108,17 +108,5 @@ class XmlFactoryInsertPropertyStatementVisitor<P> extends XmlFactoryInsertVisito
                         "   throw new XMLStreamException(\"Loading of DTD was blocked to prevent XXE: \" + systemID);\n" +
                         "});"
         );
-        return imports;
-    }
-
-    @Override
-    public J.Block visitBlock(J.Block block, P ctx) {
-        J.Block b = super.visitBlock(block, ctx);
-        Statement beforeStatement = getInsertStatement(b);
-        if (b.isScope(getScope())) {
-            Set<String> imports = addAllowList(generateAllowList);
-            b = updateBlock(b, beforeStatement, imports);
-        }
-        return b;
     }
 }
