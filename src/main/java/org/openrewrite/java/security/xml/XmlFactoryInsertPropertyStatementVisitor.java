@@ -117,7 +117,7 @@ class XmlFactoryInsertPropertyStatementVisitor<P> extends XmlFactoryInsertVisito
         Statement beforeStatement = getInsertStatement(b);
         if (b.isScope(getScope())) {
             Set<String> imports = addAllowList(generateAllowList);
-            b = updateBlock(b, block, beforeStatement, imports);
+            b = updateBlock(b, beforeStatement, imports);
         }
         return b;
     }

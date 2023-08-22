@@ -51,7 +51,7 @@ public class TransformerFactoryInsertAttributeStatementVisitor<P> extends XmlFac
         J.Block b = super.visitBlock(block, ctx);
         Statement beforeStatement = getInsertStatement(b);
         if (b.isScope(getScope())) {
-            b = updateBlock(b, block, beforeStatement, Collections.singleton("javax.xml.XMLConstants"));
+            b = updateBlock(b, beforeStatement, Collections.singleton("javax.xml.XMLConstants"));
         }
         return b;
     }

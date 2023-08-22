@@ -65,7 +65,7 @@ public abstract class XmlFactoryInsertVisitor<P> extends JavaIsoVisitor<P> {
         return s != null ? s.getCoordinates().before() : b.getCoordinates().lastStatement();
     }
 
-    public J.Block updateBlock(J.Block b, J.Block block, Statement beforeStatement, Set<String> imports) {
+    public J.Block updateBlock(J.Block b, Statement beforeStatement, Set<String> imports) {
         if (getCursor().getParent() != null && getCursor().getParent().getValue() instanceof J.ClassDeclaration) {
             template.insert(0, "{\n").append("}");
         }
@@ -75,9 +75,7 @@ public abstract class XmlFactoryInsertVisitor<P> extends JavaIsoVisitor<P> {
                 .contextSensitive()
                 .build()
                 .apply(new Cursor(getCursor().getParent(), b), getInsertCoordinates(b, beforeStatement));
-        if (b != block) {
-            imports.forEach(this::maybeAddImport);
-        }
+        imports.forEach(this::maybeAddImport);
         return b;
     }
 }
