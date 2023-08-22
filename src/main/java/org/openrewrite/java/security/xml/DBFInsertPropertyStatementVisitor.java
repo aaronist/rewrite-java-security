@@ -18,8 +18,11 @@ package org.openrewrite.java.security.xml;
 import org.openrewrite.java.tree.J;
 
 import java.util.Collections;
+import java.util.Set;
 
 public class DBFInsertPropertyStatementVisitor<P> extends XmlFactoryInsertVisitor<P> {
+    private static final Set<String> IMPORTS = Collections.singleton("javax.xml.parsers.ParserConfigurationException");
+
     private final boolean disallowDoctypes;
     private final boolean disallowGeneralEntities;
     private final boolean disallowParameterEntities;
@@ -39,7 +42,7 @@ public class DBFInsertPropertyStatementVisitor<P> extends XmlFactoryInsertVisito
                 dbfVariableName,
                 DocumentBuilderFactoryFixVisitor.DBF_NEW_INSTANCE,
                 DocumentBuilderFactoryFixVisitor.DBF_PARSER_SET_FEATURE,
-                Collections.singleton("javax.xml.parsers.ParserConfigurationException")
+                IMPORTS
         );
 
         if (needsDisallowDoctypesTrue && accIsEmpty) {
@@ -52,7 +55,6 @@ public class DBFInsertPropertyStatementVisitor<P> extends XmlFactoryInsertVisito
             disallowGeneralEntities = needsDisableGeneralEntities;
             disallowParameterEntities = needsDisableParameterEntities;
             disallowLoadExternalDTD = needsLoadExternalDTD;
-
         } else if (!needsDisallowDoctypesTrue && !accIsEmpty) {
             disallowDoctypes = false;
             disallowGeneralEntities = false;
@@ -67,7 +69,7 @@ public class DBFInsertPropertyStatementVisitor<P> extends XmlFactoryInsertVisito
     }
 
     @Override
-    public void generateAdditionalSupport() {
+    public void updateTemplate() {
         if (disallowDoctypes && !disallowGeneralEntities && !disallowParameterEntities && !disallowLoadExternalDTD) {
             getTemplate().append(
                     "String FEATURE = \"http://apache.org/xml/features/disallow-doctype-decl\";\n" +

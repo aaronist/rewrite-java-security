@@ -37,7 +37,7 @@ public abstract class XmlFactoryInsertVisitor<P> extends JavaIsoVisitor<P> {
     private final InvocationMatcher factoryMethodCallMatcher;
     private final Set<String> imports;
 
-    public abstract void generateAdditionalSupport();
+    public abstract void updateTemplate();
 
     private Statement getInsertStatement(J.Block b) {
         Statement beforeStatement = null;
@@ -87,7 +87,7 @@ public abstract class XmlFactoryInsertVisitor<P> extends JavaIsoVisitor<P> {
         J.Block b = super.visitBlock(block, ctx);
         Statement beforeStatement = getInsertStatement(b);
         if (b.isScope(scope)) {
-            generateAdditionalSupport();
+            updateTemplate();
             b = updateBlock(b, beforeStatement);
         }
         return b;

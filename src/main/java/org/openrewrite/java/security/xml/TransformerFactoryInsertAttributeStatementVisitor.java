@@ -18,8 +18,15 @@ package org.openrewrite.java.security.xml;
 import org.openrewrite.java.tree.J;
 
 import java.util.Collections;
+import java.util.Set;
 
 public class TransformerFactoryInsertAttributeStatementVisitor<P> extends XmlFactoryInsertVisitor<P> {
+    private static final Set<String> IMPORTS = Collections.singleton("javax.xml.XMLConstants");
+
+    private final boolean needsExternalEntitiesDisabled;
+    private final boolean needsStylesheetsDisabled;
+    private final boolean needsFeatureSecureProcessing;
+
     public TransformerFactoryInsertAttributeStatementVisitor(
             J.Block scope,
             String factoryVariableName,
@@ -32,9 +39,16 @@ public class TransformerFactoryInsertAttributeStatementVisitor<P> extends XmlFac
                 factoryVariableName,
                 TransformerFactoryFixVisitor.TRANSFORMER_FACTORY_INSTANCE,
                 TransformerFactoryFixVisitor.TRANSFORMER_FACTORY_SET_ATTRIBUTE,
-                Collections.singleton("javax.xml.XMLConstants")
+                IMPORTS
         );
 
+        this.needsExternalEntitiesDisabled = needsExternalEntitiesDisabled;
+        this.needsStylesheetsDisabled = needsStylesheetsDisabled;
+        this.needsFeatureSecureProcessing = needsFeatureSecureProcessing;
+    }
+
+    @Override
+    public void updateTemplate() {
         if (needsExternalEntitiesDisabled) {
             getTemplate().append(getFactoryVariableName()).append(".setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, \"\");");
         }
@@ -44,9 +58,5 @@ public class TransformerFactoryInsertAttributeStatementVisitor<P> extends XmlFac
         if (needsFeatureSecureProcessing) {
             getTemplate().append(getFactoryVariableName()).append(".setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);");
         }
-    }
-
-    @Override
-    public void generateAdditionalSupport() {
     }
 }
