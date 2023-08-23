@@ -29,8 +29,7 @@ class XmlFactoryInsertPropertyStatementVisitor<P> extends XmlFactoryInsertVisito
             "javax.xml.stream.XMLStreamException",
             "java.util.Arrays",
             "java.util.Collections"
-            )
-    );
+            ));
 
     private final ExternalDTDAccumulator acc;
 
