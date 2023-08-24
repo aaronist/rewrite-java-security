@@ -29,14 +29,14 @@ public class TransformerFactoryInsertAttributeStatementVisitor<P> extends XmlFac
 
     public TransformerFactoryInsertAttributeStatementVisitor(
             J.Block scope,
-            XmlFactoryVariable factoryVariableName,
+            XmlFactoryVariable factoryVariable,
             boolean needsExternalEntitiesDisabled,
             boolean needsStylesheetsDisabled,
             boolean needsFeatureSecureProcessing
     ) {
         super(
                 scope,
-                factoryVariableName,
+                factoryVariable,
                 TransformerFactoryFixVisitor.TRANSFORMER_FACTORY_INSTANCE,
                 TransformerFactoryFixVisitor.TRANSFORMER_FACTORY_SET_ATTRIBUTE,
                 IMPORTS
