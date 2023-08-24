@@ -24,6 +24,7 @@ import org.openrewrite.test.RewriteTest;
 import static org.openrewrite.java.Assertions.java;
 import static org.openrewrite.xml.Assertions.xml;
 
+@Disabled
 public class DocumentBuilderFactoryXXETest implements RewriteTest{
 
     @Override

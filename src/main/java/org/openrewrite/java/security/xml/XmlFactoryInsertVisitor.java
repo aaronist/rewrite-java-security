@@ -32,12 +32,16 @@ import java.util.Set;
 public abstract class XmlFactoryInsertVisitor<P> extends JavaIsoVisitor<P> {
     private final StringBuilder template = new StringBuilder();
     private final J.Block scope;
-    private final String factoryVariableName;
+    private final XmlFactoryVariable factoryVariable;
     private final InvocationMatcher factoryInstanceMatcher;
     private final InvocationMatcher factoryMethodCallMatcher;
     private final Set<String> imports;
 
     public abstract void updateTemplate();
+
+    protected String getFactoryVariableName() {
+        return factoryVariable.getVariableName();
+    }
 
     private Statement getInsertStatement(J.Block b) {
         Statement beforeStatement = null;
@@ -70,7 +74,12 @@ public abstract class XmlFactoryInsertVisitor<P> extends JavaIsoVisitor<P> {
 
     private J.Block updateBlock(J.Block b, Statement beforeStatement) {
         if (getCursor().getParent() != null && getCursor().getParent().getValue() instanceof J.ClassDeclaration) {
-            template.insert(0, "{\n").append("}");
+            if (factoryVariable.isStatic()) {
+                template.insert(0, "static {\n");
+            } else {
+                template.insert(0, "{\n");
+            }
+            template.append("\n}");
         }
         b = JavaTemplate
                 .builder(template.toString())

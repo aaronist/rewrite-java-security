@@ -30,7 +30,7 @@ public class DBFInsertPropertyStatementVisitor<P> extends XmlFactoryInsertVisito
 
     public DBFInsertPropertyStatementVisitor(
             J.Block scope,
-            String dbfVariableName,
+            XmlFactoryVariable dbfFactoryVariable,
             boolean accIsEmpty,
             boolean needsDisallowDoctypesTrue,
             boolean needsDisableGeneralEntities,
@@ -39,7 +39,7 @@ public class DBFInsertPropertyStatementVisitor<P> extends XmlFactoryInsertVisito
     ) {
         super(
                 scope,
-                dbfVariableName,
+                dbfFactoryVariable,
                 DocumentBuilderFactoryFixVisitor.DBF_NEW_INSTANCE,
                 DocumentBuilderFactoryFixVisitor.DBF_PARSER_SET_FEATURE,
                 IMPORTS

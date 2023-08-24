@@ -59,7 +59,7 @@ public class TransformerFactoryFixVisitor<P> extends XmlFactoryVisitor<P> {
         Cursor supportsFeatureSecureProcessing = getCursor().getMessage(FEATURE_SECURE_PROCESSING_NAME);
         Cursor initializationCursor = getCursor().getMessage(TRANSFORMER_FACTORY_INITIALIZATION_METHOD);
         Cursor disallowModifyFlagCursor = getCursor().getMessage(DISALLOW_MODIFY_FLAG);
-        String transformerFactoryVariableName = getCursor().getMessage(TRANSFORMER_FACTORY_VARIABLE_NAME);
+        XmlFactoryVariable transformerFactoryVariable = getCursor().getMessage(TRANSFORMER_FACTORY_VARIABLE_NAME);
 
         Cursor setAttributeBlockCursor = null;
         if (supportsExternalCursor == null && supportsStylesheetCursor == null && supportsFeatureSecureProcessing == null) {
@@ -73,10 +73,10 @@ public class TransformerFactoryFixVisitor<P> extends XmlFactoryVisitor<P> {
                 setAttributeBlockCursor = supportsFeatureSecureProcessing;
             }
         }
-        if (disallowModifyFlagCursor == null && setAttributeBlockCursor != null && transformerFactoryVariableName != null) {
+        if (disallowModifyFlagCursor == null && setAttributeBlockCursor != null && transformerFactoryVariable != null) {
             doAfterVisit(new TransformerFactoryInsertAttributeStatementVisitor<>(
                     setAttributeBlockCursor.getValue(),
-                    transformerFactoryVariableName,
+                    transformerFactoryVariable,
                     supportsExternalCursor == null,
                     supportsStylesheetCursor == null,
                     supportsFeatureSecureProcessing == null

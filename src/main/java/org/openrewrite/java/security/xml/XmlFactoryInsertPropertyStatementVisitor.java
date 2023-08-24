@@ -42,7 +42,7 @@ class XmlFactoryInsertPropertyStatementVisitor<P> extends XmlFactoryInsertVisito
 
     public XmlFactoryInsertPropertyStatementVisitor(
             J.Block scope,
-            String factoryVariableName,
+            XmlFactoryVariable factoryVariableName,
             boolean needsExternalEntitiesDisabled,
             boolean needsSupportDTDFalse,
             boolean accIsEmpty,

@@ -17,6 +17,7 @@ package org.openrewrite.java.security.xml;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.openrewrite.Cursor;
 import org.openrewrite.analysis.InvocationMatcher;
 import org.openrewrite.java.JavaIsoVisitor;
 import org.openrewrite.java.tree.J;
@@ -38,7 +39,11 @@ public abstract class XmlFactoryVisitor<P> extends JavaIsoVisitor<P> {
     public J.VariableDeclarations.NamedVariable visitVariable(J.VariableDeclarations.NamedVariable variable, P ctx) {
         J.VariableDeclarations.NamedVariable v = super.visitVariable(variable, ctx);
         if (TypeUtils.isOfClassType(v.getType(), factoryFqn)) {
-            getCursor().putMessageOnFirstEnclosing(J.ClassDeclaration.class, factoryVariableName, v.getSimpleName());
+            XmlFactoryVariable factoryVariable = new XmlFactoryVariable(
+                    v.getSimpleName(),
+                    getCursor().firstEnclosingOrThrow(J.VariableDeclarations.class).getModifiers()
+            );
+            addMessage(factoryVariableName, factoryVariable);
         }
         return v;
     }
@@ -47,7 +52,7 @@ public abstract class XmlFactoryVisitor<P> extends JavaIsoVisitor<P> {
     public J.MethodInvocation visitMethodInvocation(J.MethodInvocation method, P ctx) {
         J.MethodInvocation m = super.visitMethodInvocation(method, ctx);
         if (factoryInstance.matches(m)) {
-            getCursor().putMessageOnFirstEnclosing(J.ClassDeclaration.class, factoryInitializationMethod, getCursor().dropParentUntil(J.Block.class::isInstance));
+            addMessage(factoryInitializationMethod, getCursor().dropParentUntil(J.Block.class::isInstance));
         }
         return m;
     }
@@ -57,7 +62,21 @@ public abstract class XmlFactoryVisitor<P> extends JavaIsoVisitor<P> {
      *
      * @param message The message to be added.
      */
-    public void addMessage(String message) {
-        getCursor().putMessageOnFirstEnclosing(J.ClassDeclaration.class, message, getCursor().dropParentUntil(J.Block.class::isInstance));
+    protected void addMessage(String message) {
+        addMessage(message, getCursor().dropParentUntil(J.Block.class::isInstance));
+    }
+
+    protected void addMessage(String message, Object value) {
+        putMessageOnFirstEnclosingIfMissing(getCursor(), J.ClassDeclaration.class, message, value);
+    }
+
+    private static void putMessageOnFirstEnclosingIfMissing(Cursor c, Class<?> enclosing, String key, Object value) {
+        if (enclosing.isInstance(c.getValue())) {
+            if (c.getMessage(key) == null) {
+                c.putMessage(key, value);
+            }
+        } else if (c.getParent() != null) {
+            putMessageOnFirstEnclosingIfMissing(c.getParent(), enclosing, key, value);
+        }
     }
 }

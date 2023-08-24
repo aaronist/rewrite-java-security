@@ -25,7 +25,9 @@ import org.openrewrite.analysis.InvocationMatcher;
 import org.openrewrite.analysis.dataflow.DataFlowNode;
 import org.openrewrite.analysis.dataflow.DataFlowSpec;
 import org.openrewrite.analysis.dataflow.Dataflow;
-import org.openrewrite.analysis.trait.expr.*;
+import org.openrewrite.analysis.trait.expr.Expr;
+import org.openrewrite.analysis.trait.expr.Literal;
+import org.openrewrite.analysis.trait.expr.VarAccess;
 import org.openrewrite.analysis.trait.variable.Variable;
 import org.openrewrite.java.JavaIsoVisitor;
 import org.openrewrite.java.MethodMatcher;
@@ -34,10 +36,7 @@ import org.openrewrite.java.tree.Expression;
 import org.openrewrite.java.tree.J;
 import org.openrewrite.java.tree.TypeUtils;
 
-import javax.xml.stream.XMLInputFactory;
-import java.lang.reflect.Method;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 
 @AllArgsConstructor
@@ -143,7 +142,7 @@ public class DocumentBuilderFactoryFixVisitor<P> extends JavaIsoVisitor<P> {
 //        Cursor supportsFalseDTDCursor = getCursor().getMessage(SUPPORT_DTD_FALSE_PROPERTY_NAME);
 //        Cursor supportsDTDTrueCursor = getCursor().getMessage(SUPPORT_DTD_TRUE_PROPERTY_NAME);
         Cursor initializationCursor = getCursor().getMessage(DBF_INITIALIZATION_METHOD);
-        String dbfVariableName = getCursor().getMessage(DBF_VARIABLE_NAME);
+        XmlFactoryVariable dbfFactoryVariable = getCursor().getMessage(DBF_VARIABLE_NAME);
 //        Cursor xmlResolverMethod = getCursor().getMessage(XML_RESOLVER_METHOD);
 
         Cursor disallowedDTDTrueCursor = getCursor().getMessage(DISALLOW_DOCTYPE_DECLARATIONS);
@@ -161,10 +160,10 @@ public class DocumentBuilderFactoryFixVisitor<P> extends JavaIsoVisitor<P> {
         } else if (disallowedDTDTrueCursor != null) {
             setPropertyBlockCursor = disallowedDTDTrueCursor;
         }
-        if (setPropertyBlockCursor != null && dbfVariableName != null) {
+        if (setPropertyBlockCursor != null && dbfFactoryVariable != null) {
             doAfterVisit(new DBFInsertPropertyStatementVisitor<>(
                     setPropertyBlockCursor.getValue(),
-                    dbfVariableName,
+                    dbfFactoryVariable,
                     acc.getExternalDTDs().isEmpty(),
                     disallowedDTDTrueCursor == null,
                     generalEntitiesDisabledCursor == null,
