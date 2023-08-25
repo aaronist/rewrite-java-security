@@ -45,7 +45,7 @@ public abstract class XmlFactoryVisitor<P> extends JavaIsoVisitor<P> {
         J.MethodInvocation m = super.visitMethodInvocation(method, ctx);
         if (factoryInstance.matches(m)) {
             count++;
-            addMessage(factoryInitializationMethod + getCount());
+            addMessage(factoryInitializationMethod);
 
             J.VariableDeclarations.NamedVariable parentVariable = getCursor().firstEnclosing(J.VariableDeclarations.NamedVariable.class);
             Cursor maybeParentAssignment = getCursor().dropParentUntil(c -> c instanceof J.Assignment || c instanceof J.ClassDeclaration);
@@ -55,7 +55,7 @@ public abstract class XmlFactoryVisitor<P> extends JavaIsoVisitor<P> {
                             parentVariable.getSimpleName(),
                             getCursor().firstEnclosingOrThrow(J.VariableDeclarations.class).getModifiers()
                     );
-                    addMessage(factoryVariableName + getCount(), factoryVariable);
+                    addMessage(factoryVariableName, factoryVariable);
                 }
             } else if (maybeParentAssignment.getValue() instanceof J.Assignment) {
                 J.Assignment parentAssignment = maybeParentAssignment.getValue();
@@ -66,7 +66,7 @@ public abstract class XmlFactoryVisitor<P> extends JavaIsoVisitor<P> {
                                 ident.getSimpleName(),
                                 Collections.emptyList()
                         );
-                        addMessage(factoryVariableName + getCount(), factoryVariable);
+                        addMessage(factoryVariableName, factoryVariable);
                     }
                 }
             }
@@ -84,7 +84,7 @@ public abstract class XmlFactoryVisitor<P> extends JavaIsoVisitor<P> {
     }
 
     protected void addMessage(String message, Object value) {
-        putMessageOnFirstEnclosingIfMissing(getCursor(), J.ClassDeclaration.class, message, value);
+        putMessageOnFirstEnclosingIfMissing(getCursor(), J.ClassDeclaration.class, message + getCount(), value);
     }
 
     private static void putMessageOnFirstEnclosingIfMissing(Cursor c, Class<?> enclosing, String key, Object value) {
