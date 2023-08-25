@@ -96,14 +96,14 @@ public class TransformerFactoryFixVisitor<P> extends XmlFactoryVisitor<P> {
                 J.Literal string = (J.Literal) m.getArguments().get(1);
                 assert string.getValue() != null;
                 if (!(((String) string.getValue()).isEmpty())) {
-                    addMessage(DISALLOW_MODIFY_FLAG + getCount());
+                    addMessage(DISALLOW_MODIFY_FLAG);
                 }
             }
             J.FieldAccess fa = (J.FieldAccess) m.getArguments().get(0);
             if (ACCESS_EXTERNAL_DTD_NAME.equals(fa.getSimpleName())) {
-                addMessage(ACCESS_EXTERNAL_DTD_NAME + getCount());
+                addMessage(ACCESS_EXTERNAL_DTD_NAME);
             } else if (ACCESS_EXTERNAL_STYLESHEET_NAME.equals(fa.getSimpleName())) {
-                addMessage(ACCESS_EXTERNAL_STYLESHEET_NAME + getCount());
+                addMessage(ACCESS_EXTERNAL_STYLESHEET_NAME);
             }
         } else if (TRANSFORMER_FACTORY_SET_FEATURE.matches(m)) {
             // If FEATURE_SECURE_PROCESSING is set to false, do not make any changes
@@ -111,18 +111,18 @@ public class TransformerFactoryFixVisitor<P> extends XmlFactoryVisitor<P> {
                 J.Literal bool = (J.Literal) m.getArguments().get(1);
                 assert bool.getValue() != null;
                 if (Boolean.FALSE.equals(bool.getValue())) {
-                    addMessage(DISALLOW_MODIFY_FLAG + getCount());
+                    addMessage(DISALLOW_MODIFY_FLAG);
                 }
             }
             if (m.getArguments().get(0) instanceof J.FieldAccess) {
                 J.FieldAccess fa = (J.FieldAccess) m.getArguments().get(0);
                 if (FEATURE_SECURE_PROCESSING_NAME.equals(fa.getSimpleName())) {
-                    addMessage(FEATURE_SECURE_PROCESSING_NAME + getCount());
+                    addMessage(FEATURE_SECURE_PROCESSING_NAME);
                 }
             } else if (m.getArguments().get(0) instanceof J.Literal) {
                 J.Literal literal = (J.Literal) m.getArguments().get(0);
                 if (XMLConstants.FEATURE_SECURE_PROCESSING.equals(literal.getValue())) {
-                    addMessage(FEATURE_SECURE_PROCESSING_NAME + getCount());
+                    addMessage(FEATURE_SECURE_PROCESSING_NAME);
                 }
             }
         }
