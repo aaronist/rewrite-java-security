@@ -23,9 +23,13 @@ import org.openrewrite.java.JavaIsoVisitor;
 import org.openrewrite.java.tree.J;
 import org.openrewrite.java.tree.TypeUtils;
 
+import java.util.Collections;
+
 @AllArgsConstructor
 @Getter
 public abstract class XmlFactoryVisitor<P> extends JavaIsoVisitor<P> {
+    static int count = 0;
+
     private final InvocationMatcher factoryInstance;
 
     private final String factoryFqn;
@@ -36,23 +40,35 @@ public abstract class XmlFactoryVisitor<P> extends JavaIsoVisitor<P> {
     private final ExternalDTDAccumulator acc;
 
     @Override
-    public J.VariableDeclarations.NamedVariable visitVariable(J.VariableDeclarations.NamedVariable variable, P ctx) {
-        J.VariableDeclarations.NamedVariable v = super.visitVariable(variable, ctx);
-        if (TypeUtils.isOfClassType(v.getType(), factoryFqn)) {
-            XmlFactoryVariable factoryVariable = new XmlFactoryVariable(
-                    v.getSimpleName(),
-                    getCursor().firstEnclosingOrThrow(J.VariableDeclarations.class).getModifiers()
-            );
-            addMessage(factoryVariableName, factoryVariable);
-        }
-        return v;
-    }
-
-    @Override
     public J.MethodInvocation visitMethodInvocation(J.MethodInvocation method, P ctx) {
         J.MethodInvocation m = super.visitMethodInvocation(method, ctx);
         if (factoryInstance.matches(m)) {
-            addMessage(factoryInitializationMethod, getCursor().dropParentUntil(J.Block.class::isInstance));
+            count++;
+            addMessage(factoryInitializationMethod + count);
+
+            J.VariableDeclarations.NamedVariable parentVariable = getCursor().firstEnclosing(J.VariableDeclarations.NamedVariable.class);
+            Cursor maybeParentAssignment = getCursor().dropParentUntil(c -> c instanceof J.Assignment || c instanceof J.ClassDeclaration);
+            if (parentVariable != null) {
+                if (TypeUtils.isOfClassType(parentVariable.getType(), factoryFqn)) {
+                    XmlFactoryVariable factoryVariable = new XmlFactoryVariable(
+                            parentVariable.getSimpleName(),
+                            getCursor().firstEnclosingOrThrow(J.VariableDeclarations.class).getModifiers()
+                    );
+                    addMessage(factoryVariableName + count, factoryVariable);
+                }
+            } else if (maybeParentAssignment.getValue() instanceof J.Assignment) {
+                J.Assignment parentAssignment = maybeParentAssignment.getValue();
+                if (TypeUtils.isOfClassType(parentAssignment.getVariable().getType(), factoryFqn)) {
+                    if (parentAssignment.getVariable().unwrap() instanceof J.Identifier) {
+                        J.Identifier ident = (J.Identifier) parentAssignment.getVariable().unwrap();
+                        XmlFactoryVariable factoryVariable = new XmlFactoryVariable(
+                                ident.getSimpleName(),
+                                Collections.emptyList()
+                        );
+                        addMessage(factoryVariableName + count, factoryVariable);
+                    }
+                }
+            }
         }
         return m;
     }

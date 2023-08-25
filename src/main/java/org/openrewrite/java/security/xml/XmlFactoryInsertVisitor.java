@@ -21,6 +21,7 @@ import org.openrewrite.Cursor;
 import org.openrewrite.analysis.InvocationMatcher;
 import org.openrewrite.java.JavaIsoVisitor;
 import org.openrewrite.java.JavaTemplate;
+import org.openrewrite.java.tree.Expression;
 import org.openrewrite.java.tree.J;
 import org.openrewrite.java.tree.JavaCoordinates;
 import org.openrewrite.java.tree.Statement;
@@ -51,14 +52,20 @@ public abstract class XmlFactoryInsertVisitor<P> extends JavaIsoVisitor<P> {
                 Statement stBefore = b.getStatements().get(i + 1);
                 if (st instanceof J.MethodInvocation) {
                     J.MethodInvocation m = (J.MethodInvocation) st;
-                    if (factoryInstanceMatcher.matches(m) || factoryMethodCallMatcher.matches(m)) {
-                        beforeStatement = stBefore;
+                    if (Expression.unwrap(m.getSelect()) instanceof J.Identifier &&
+                        (factoryInstanceMatcher.matches(m) || factoryMethodCallMatcher.matches(m))
+                    ) {
+                        J.Identifier ident = (J.Identifier) m.getSelect().unwrap();
+                        if (ident.getSimpleName().equals(getFactoryVariableName())) {
+                            beforeStatement = stBefore;
+                        }
                     }
                 } else if (st instanceof J.VariableDeclarations) {
                     J.VariableDeclarations vd = (J.VariableDeclarations) st;
                     if (vd.getVariables().get(0).getInitializer() instanceof J.MethodInvocation) {
+                        String varName = vd.getVariables().get(0).getSimpleName();
                         J.MethodInvocation m = (J.MethodInvocation) vd.getVariables().get(0).getInitializer();
-                        if (m != null && factoryInstanceMatcher.matches(m)) {
+                        if (m != null && varName.equals(getFactoryVariableName()) && factoryInstanceMatcher.matches(m)) {
                             beforeStatement = stBefore;
                         }
                     }
