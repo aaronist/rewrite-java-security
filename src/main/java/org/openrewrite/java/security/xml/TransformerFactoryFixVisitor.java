@@ -54,7 +54,7 @@ public class TransformerFactoryFixVisitor<P> extends XmlFactoryVisitor<P> {
     @Override
     public J.ClassDeclaration visitClassDeclaration(J.ClassDeclaration classDecl, P ctx) {
         J.ClassDeclaration cd = super.visitClassDeclaration(classDecl, ctx);
-        for (int i = 1; i <= XmlFactoryVisitor.count; i++) {
+        for (int i = 1; i <= getCount(); i++) {
             Cursor supportsExternalCursor = getCursor().getMessage(ACCESS_EXTERNAL_DTD_NAME + i);
             Cursor supportsStylesheetCursor = getCursor().getMessage(ACCESS_EXTERNAL_STYLESHEET_NAME + i);
             Cursor supportsFeatureSecureProcessing = getCursor().getMessage(FEATURE_SECURE_PROCESSING_NAME + i);
@@ -96,14 +96,14 @@ public class TransformerFactoryFixVisitor<P> extends XmlFactoryVisitor<P> {
                 J.Literal string = (J.Literal) m.getArguments().get(1);
                 assert string.getValue() != null;
                 if (!(((String) string.getValue()).isEmpty())) {
-                    addMessage(DISALLOW_MODIFY_FLAG + XmlFactoryVisitor.count);
+                    addMessage(DISALLOW_MODIFY_FLAG + getCount());
                 }
             }
             J.FieldAccess fa = (J.FieldAccess) m.getArguments().get(0);
             if (ACCESS_EXTERNAL_DTD_NAME.equals(fa.getSimpleName())) {
-                addMessage(ACCESS_EXTERNAL_DTD_NAME + XmlFactoryVisitor.count);
+                addMessage(ACCESS_EXTERNAL_DTD_NAME + getCount());
             } else if (ACCESS_EXTERNAL_STYLESHEET_NAME.equals(fa.getSimpleName())) {
-                addMessage(ACCESS_EXTERNAL_STYLESHEET_NAME + XmlFactoryVisitor.count);
+                addMessage(ACCESS_EXTERNAL_STYLESHEET_NAME + getCount());
             }
         } else if (TRANSFORMER_FACTORY_SET_FEATURE.matches(m)) {
             // If FEATURE_SECURE_PROCESSING is set to false, do not make any changes
@@ -111,18 +111,18 @@ public class TransformerFactoryFixVisitor<P> extends XmlFactoryVisitor<P> {
                 J.Literal bool = (J.Literal) m.getArguments().get(1);
                 assert bool.getValue() != null;
                 if (Boolean.FALSE.equals(bool.getValue())) {
-                    addMessage(DISALLOW_MODIFY_FLAG + XmlFactoryVisitor.count);
+                    addMessage(DISALLOW_MODIFY_FLAG + getCount());
                 }
             }
             if (m.getArguments().get(0) instanceof J.FieldAccess) {
                 J.FieldAccess fa = (J.FieldAccess) m.getArguments().get(0);
                 if (FEATURE_SECURE_PROCESSING_NAME.equals(fa.getSimpleName())) {
-                    addMessage(FEATURE_SECURE_PROCESSING_NAME + XmlFactoryVisitor.count);
+                    addMessage(FEATURE_SECURE_PROCESSING_NAME + getCount());
                 }
             } else if (m.getArguments().get(0) instanceof J.Literal) {
                 J.Literal literal = (J.Literal) m.getArguments().get(0);
                 if (XMLConstants.FEATURE_SECURE_PROCESSING.equals(literal.getValue())) {
-                    addMessage(FEATURE_SECURE_PROCESSING_NAME + XmlFactoryVisitor.count);
+                    addMessage(FEATURE_SECURE_PROCESSING_NAME + getCount());
                 }
             }
         }

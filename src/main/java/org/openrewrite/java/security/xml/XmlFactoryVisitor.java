@@ -17,6 +17,7 @@ package org.openrewrite.java.security.xml;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import org.openrewrite.Cursor;
 import org.openrewrite.analysis.InvocationMatcher;
 import org.openrewrite.java.JavaIsoVisitor;
@@ -25,10 +26,10 @@ import org.openrewrite.java.tree.TypeUtils;
 
 import java.util.Collections;
 
-@AllArgsConstructor
+@RequiredArgsConstructor
 @Getter
 public abstract class XmlFactoryVisitor<P> extends JavaIsoVisitor<P> {
-    static int count = 0;
+    private int count = 0;
 
     private final InvocationMatcher factoryInstance;
 
@@ -44,7 +45,7 @@ public abstract class XmlFactoryVisitor<P> extends JavaIsoVisitor<P> {
         J.MethodInvocation m = super.visitMethodInvocation(method, ctx);
         if (factoryInstance.matches(m)) {
             count++;
-            addMessage(factoryInitializationMethod + count);
+            addMessage(factoryInitializationMethod + getCount());
 
             J.VariableDeclarations.NamedVariable parentVariable = getCursor().firstEnclosing(J.VariableDeclarations.NamedVariable.class);
             Cursor maybeParentAssignment = getCursor().dropParentUntil(c -> c instanceof J.Assignment || c instanceof J.ClassDeclaration);
@@ -54,7 +55,7 @@ public abstract class XmlFactoryVisitor<P> extends JavaIsoVisitor<P> {
                             parentVariable.getSimpleName(),
                             getCursor().firstEnclosingOrThrow(J.VariableDeclarations.class).getModifiers()
                     );
-                    addMessage(factoryVariableName + count, factoryVariable);
+                    addMessage(factoryVariableName + getCount(), factoryVariable);
                 }
             } else if (maybeParentAssignment.getValue() instanceof J.Assignment) {
                 J.Assignment parentAssignment = maybeParentAssignment.getValue();
@@ -65,7 +66,7 @@ public abstract class XmlFactoryVisitor<P> extends JavaIsoVisitor<P> {
                                 ident.getSimpleName(),
                                 Collections.emptyList()
                         );
-                        addMessage(factoryVariableName + count, factoryVariable);
+                        addMessage(factoryVariableName + getCount(), factoryVariable);
                     }
                 }
             }
