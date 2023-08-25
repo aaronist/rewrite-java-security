@@ -54,33 +54,35 @@ public class TransformerFactoryFixVisitor<P> extends XmlFactoryVisitor<P> {
     @Override
     public J.ClassDeclaration visitClassDeclaration(J.ClassDeclaration classDecl, P ctx) {
         J.ClassDeclaration cd = super.visitClassDeclaration(classDecl, ctx);
-        Cursor supportsExternalCursor = getCursor().getMessage(ACCESS_EXTERNAL_DTD_NAME);
-        Cursor supportsStylesheetCursor = getCursor().getMessage(ACCESS_EXTERNAL_STYLESHEET_NAME);
-        Cursor supportsFeatureSecureProcessing = getCursor().getMessage(FEATURE_SECURE_PROCESSING_NAME);
-        Cursor initializationCursor = getCursor().getMessage(TRANSFORMER_FACTORY_INITIALIZATION_METHOD);
-        Cursor disallowModifyFlagCursor = getCursor().getMessage(DISALLOW_MODIFY_FLAG);
-        XmlFactoryVariable transformerFactoryVariable = getCursor().getMessage(TRANSFORMER_FACTORY_VARIABLE_NAME);
+        for (int i = 1; i <= XmlFactoryVisitor.count; i++) {
+            Cursor supportsExternalCursor = getCursor().getMessage(ACCESS_EXTERNAL_DTD_NAME + i);
+            Cursor supportsStylesheetCursor = getCursor().getMessage(ACCESS_EXTERNAL_STYLESHEET_NAME + i);
+            Cursor supportsFeatureSecureProcessing = getCursor().getMessage(FEATURE_SECURE_PROCESSING_NAME + i);
+            Cursor initializationCursor = getCursor().getMessage(TRANSFORMER_FACTORY_INITIALIZATION_METHOD + i);
+            Cursor disallowModifyFlagCursor = getCursor().getMessage(DISALLOW_MODIFY_FLAG + i);
+            XmlFactoryVariable transformerFactoryVariable = getCursor().getMessage(TRANSFORMER_FACTORY_VARIABLE_NAME + i);
 
-        Cursor setAttributeBlockCursor = null;
-        if (supportsExternalCursor == null && supportsStylesheetCursor == null && supportsFeatureSecureProcessing == null) {
-            setAttributeBlockCursor = initializationCursor;
-        } else if ((supportsExternalCursor == null ^ supportsStylesheetCursor == null) || (supportsStylesheetCursor == null ^ supportsFeatureSecureProcessing == null)) {
-            if (supportsExternalCursor != null) {
-                setAttributeBlockCursor = supportsExternalCursor;
-            } else if (supportsStylesheetCursor != null) {
-                setAttributeBlockCursor = supportsStylesheetCursor;
-            } else {
-                setAttributeBlockCursor = supportsFeatureSecureProcessing;
+            Cursor setAttributeBlockCursor = null;
+            if (supportsExternalCursor == null && supportsStylesheetCursor == null && supportsFeatureSecureProcessing == null) {
+                setAttributeBlockCursor = initializationCursor;
+            } else if ((supportsExternalCursor == null ^ supportsStylesheetCursor == null) || (supportsStylesheetCursor == null ^ supportsFeatureSecureProcessing == null)) {
+                if (supportsExternalCursor != null) {
+                    setAttributeBlockCursor = supportsExternalCursor;
+                } else if (supportsStylesheetCursor != null) {
+                    setAttributeBlockCursor = supportsStylesheetCursor;
+                } else {
+                    setAttributeBlockCursor = supportsFeatureSecureProcessing;
+                }
             }
-        }
-        if (disallowModifyFlagCursor == null && setAttributeBlockCursor != null && transformerFactoryVariable != null) {
-            doAfterVisit(new TransformerFactoryInsertAttributeStatementVisitor<>(
-                    setAttributeBlockCursor.getValue(),
-                    transformerFactoryVariable,
-                    supportsExternalCursor == null,
-                    supportsStylesheetCursor == null,
-                    supportsFeatureSecureProcessing == null
-            ));
+            if (disallowModifyFlagCursor == null && setAttributeBlockCursor != null && transformerFactoryVariable != null) {
+                doAfterVisit(new TransformerFactoryInsertAttributeStatementVisitor<>(
+                        setAttributeBlockCursor.getValue(),
+                        transformerFactoryVariable,
+                        supportsExternalCursor == null,
+                        supportsStylesheetCursor == null,
+                        supportsFeatureSecureProcessing == null
+                ));
+            }
         }
         return cd;
     }
@@ -94,14 +96,14 @@ public class TransformerFactoryFixVisitor<P> extends XmlFactoryVisitor<P> {
                 J.Literal string = (J.Literal) m.getArguments().get(1);
                 assert string.getValue() != null;
                 if (!(((String) string.getValue()).isEmpty())) {
-                    addMessage(DISALLOW_MODIFY_FLAG);
+                    addMessage(DISALLOW_MODIFY_FLAG + XmlFactoryVisitor.count);
                 }
             }
             J.FieldAccess fa = (J.FieldAccess) m.getArguments().get(0);
             if (ACCESS_EXTERNAL_DTD_NAME.equals(fa.getSimpleName())) {
-                addMessage(ACCESS_EXTERNAL_DTD_NAME);
+                addMessage(ACCESS_EXTERNAL_DTD_NAME + XmlFactoryVisitor.count);
             } else if (ACCESS_EXTERNAL_STYLESHEET_NAME.equals(fa.getSimpleName())) {
-                addMessage(ACCESS_EXTERNAL_STYLESHEET_NAME);
+                addMessage(ACCESS_EXTERNAL_STYLESHEET_NAME + XmlFactoryVisitor.count);
             }
         } else if (TRANSFORMER_FACTORY_SET_FEATURE.matches(m)) {
             // If FEATURE_SECURE_PROCESSING is set to false, do not make any changes
@@ -109,18 +111,18 @@ public class TransformerFactoryFixVisitor<P> extends XmlFactoryVisitor<P> {
                 J.Literal bool = (J.Literal) m.getArguments().get(1);
                 assert bool.getValue() != null;
                 if (Boolean.FALSE.equals(bool.getValue())) {
-                    addMessage(DISALLOW_MODIFY_FLAG);
+                    addMessage(DISALLOW_MODIFY_FLAG + XmlFactoryVisitor.count);
                 }
             }
             if (m.getArguments().get(0) instanceof J.FieldAccess) {
                 J.FieldAccess fa = (J.FieldAccess) m.getArguments().get(0);
                 if (FEATURE_SECURE_PROCESSING_NAME.equals(fa.getSimpleName())) {
-                    addMessage(FEATURE_SECURE_PROCESSING_NAME);
+                    addMessage(FEATURE_SECURE_PROCESSING_NAME + XmlFactoryVisitor.count);
                 }
             } else if (m.getArguments().get(0) instanceof J.Literal) {
                 J.Literal literal = (J.Literal) m.getArguments().get(0);
                 if (XMLConstants.FEATURE_SECURE_PROCESSING.equals(literal.getValue())) {
-                    addMessage(FEATURE_SECURE_PROCESSING_NAME);
+                    addMessage(FEATURE_SECURE_PROCESSING_NAME + XmlFactoryVisitor.count);
                 }
             }
         }
