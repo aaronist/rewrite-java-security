@@ -51,7 +51,7 @@ public class DBFInsertPropertyStatementVisitor<P> extends XmlFactoryInsertVisito
             disallowParameterEntities = false;
             disallowLoadExternalDTD = false;
         } else if (needsDisallowDoctypesTrue && !accIsEmpty) {
-            disallowDoctypes = true;
+            disallowDoctypes = false;
             disallowGeneralEntities = needsDisableGeneralEntities;
             disallowParameterEntities = needsDisableParameterEntities;
             disallowLoadExternalDTD = needsLoadExternalDTD;
@@ -80,7 +80,7 @@ public class DBFInsertPropertyStatementVisitor<P> extends XmlFactoryInsertVisito
                     "            + FEATURE + \"' is not supported by your XML processor.\", e);\n" +
                     "}\n"
             );
-        } else if (disallowDoctypes && disallowGeneralEntities && disallowParameterEntities && disallowLoadExternalDTD) {
+        } else if (!disallowDoctypes && disallowGeneralEntities && disallowParameterEntities && disallowLoadExternalDTD) {
             getTemplate().append(
                     "String FEATURE = null;\n" +
                     "try {\n" +
@@ -97,8 +97,9 @@ public class DBFInsertPropertyStatementVisitor<P> extends XmlFactoryInsertVisito
                     "   " + getFactoryVariableName() + ".setExpandEntityReferences(false);\n" +
                     "\n" +
                     "   " + getFactoryVariableName() + ".setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);\n" +
+                    "\n" +
                     "} catch (ParserConfigurationException e) {\n" +
-                    "    throw new IllegalStateException(\"ParserConfigurationException was thrown. The feature '\"\n" +
+                    "    throw new IllegalStateException(\"The feature '\"\n" +
                     "            + FEATURE + \"' is not supported by your XML processor.\", e);\n" +
                     "}\n"
             );

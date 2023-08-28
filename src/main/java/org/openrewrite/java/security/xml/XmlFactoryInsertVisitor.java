@@ -104,7 +104,9 @@ public abstract class XmlFactoryInsertVisitor<P> extends JavaIsoVisitor<P> {
         Statement beforeStatement = getInsertStatement(b);
         if (b.isScope(scope)) {
             updateTemplate();
-            b = updateBlock(b, beforeStatement);
+            if (template.length() != 0) {
+                b = updateBlock(b, beforeStatement);
+            }
         }
         return b;
     }

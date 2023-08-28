@@ -39,13 +39,11 @@ import org.openrewrite.java.tree.TypeUtils;
 import java.util.Arrays;
 import java.util.List;
 
-@AllArgsConstructor
-public class DocumentBuilderFactoryFixVisitor<P> extends JavaIsoVisitor<P> {
+public class DocumentBuilderFactoryFixVisitor<P> extends XmlFactoryVisitor<P> {
 
     static final InvocationMatcher DBF_NEW_INSTANCE = InvocationMatcher.fromMethodMatcher(new MethodMatcher("javax.xml.parsers.DocumentBuilderFactory newInstance*()"));
     static final InvocationMatcher DBF_PARSER_SET_FEATURE = InvocationMatcher.fromMethodMatcher(new MethodMatcher("javax.xml.parsers.DocumentBuilderFactory setFeature(java.lang.String, boolean)"));
 
-    private final ExternalDTDAccumulator acc;
     private static final String DBF_FQN = "javax.xml.parsers.DocumentBuilderFactory";
     private static final String DISALLOW_DOCTYPE_DECLARATIONS = "http://apache.org/xml/features/disallow-doctype-decl";
     private static final String DISABLE_GENERAL_ENTITIES = "http://xml.org/sax/features/external-general-entities";
@@ -66,6 +64,16 @@ public class DocumentBuilderFactoryFixVisitor<P> extends JavaIsoVisitor<P> {
     private static final String DISALLOWED_DTD_TRUE_MESSAGE = "DTD_DISALLOWED";
     private static final String DISALLOWED_DTD_FALSE_MESSAGE = "DTD_ALLOWED";
     private static final String DBF_VARIABLE_NAME = "dbf-variable-name";
+
+    DocumentBuilderFactoryFixVisitor(ExternalDTDAccumulator acc) {
+        super(
+                DBF_NEW_INSTANCE,
+                DBF_FQN,
+                DBF_INITIALIZATION_METHOD,
+                DBF_VARIABLE_NAME,
+                acc
+        );
+    }
 
 
     private static final class DBFArgumentsSpec extends DataFlowSpec {
@@ -164,7 +172,7 @@ public class DocumentBuilderFactoryFixVisitor<P> extends JavaIsoVisitor<P> {
             doAfterVisit(new DBFInsertPropertyStatementVisitor<>(
                     setPropertyBlockCursor.getValue(),
                     dbfFactoryVariable,
-                    acc.getExternalDTDs().isEmpty(),
+                    getAcc().getExternalDTDs().isEmpty(),
                     disallowedDTDTrueCursor == null,
                     generalEntitiesDisabledCursor == null,
                     parameterEntitiesDisabledCursor == null,
@@ -172,53 +180,6 @@ public class DocumentBuilderFactoryFixVisitor<P> extends JavaIsoVisitor<P> {
             ));
         }
         return cd;
-    }
-
-    @Override
-    public J.VariableDeclarations.NamedVariable visitVariable(J.VariableDeclarations.NamedVariable variable, P ctx) {
-        J.VariableDeclarations.NamedVariable v = super.visitVariable(variable, ctx);
-        if (TypeUtils.isOfClassType(v.getType(), DBF_FQN)) {
-            getCursor().putMessageOnFirstEnclosing(J.ClassDeclaration.class, DBF_VARIABLE_NAME, v.getSimpleName());
-        }
-        return v;
-    }
-
-    @Override
-    public J.MethodInvocation visitMethodInvocation(J.MethodInvocation method, P ctx) {
-        J.MethodInvocation m = super.visitMethodInvocation(method, ctx);
-        if (DBF_NEW_INSTANCE.matches(m)) {
-            getCursor().putMessageOnFirstEnclosing(J.ClassDeclaration.class, DBF_INITIALIZATION_METHOD, getCursor().dropParentUntil(J.Block.class::isInstance));
-//        }
-//        else if (DBF_PARSER_SET_FEATURE.matches(m) && m.getArguments().get(0) instanceof J.Identifier) {
-//            Collection<Expr> test = ((VarAccess) MethodAccess.viewOf(getCursor()).success().getArguments().get(0)).getVariable().getAssignedValues();
-//            VarAccess test2 = test.getVariable().getVarAccesses().iterator().next();
-
-//            J.Identifier id = (J.Identifier) m.getArguments().get(0);
-//            if (DISALLOW_DOCTYPE_DECLARATIONS.equals(id.getSimpleName())) {
-//                getCursor().putMessageOnFirstEnclosing(J.ClassDeclaration.class, DISALLOWED_DTD_MESSAGE, getCursor().dropParentUntil(J.Block.class::isInstance));
-//            }
-        } else if (DBF_PARSER_SET_FEATURE.matches(m) && m.getArguments().get(0) instanceof J.Literal) {
-            J.Literal literal = (J.Literal) m.getArguments().get(0);
-            if (TypeUtils.isString(literal.getType())) {
-                if (DISALLOW_DOCTYPE_DECLARATIONS.equals(literal.getValue())) {
-//                    getCursor().putMessageOnFirstEnclosing(J.ClassDeclaration.class, DISALLOWED_DTD_MESSAGE, getCursor().dropParentUntil(J.Block.class::isInstance));
-                    checkDTDSupport(m);
-                }
-            }
-        }
-
-        return m;
-    }
-
-    private void checkDTDSupport(J.MethodInvocation m) {
-        if (m.getArguments().get(1) instanceof J.Literal) {
-            J.Literal literal = (J.Literal) m.getArguments().get(1);
-            if (Boolean.TRUE.equals(literal.getValue())) {
-                getCursor().putMessageOnFirstEnclosing(J.ClassDeclaration.class, DISALLOWED_DTD_TRUE_MESSAGE, getCursor().dropParentUntil(J.Block.class::isInstance));
-            } else {
-                getCursor().putMessageOnFirstEnclosing(J.ClassDeclaration.class, DISALLOWED_DTD_FALSE_MESSAGE, getCursor().dropParentUntil(J.Block.class::isInstance));
-            }
-        }
     }
 
     public static TreeVisitor<?, ExecutionContext> create(ExternalDTDAccumulator acc) {

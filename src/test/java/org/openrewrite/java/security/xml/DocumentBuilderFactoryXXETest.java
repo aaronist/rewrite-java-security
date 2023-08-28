@@ -24,7 +24,6 @@ import org.openrewrite.test.RewriteTest;
 import static org.openrewrite.java.Assertions.java;
 import static org.openrewrite.xml.Assertions.xml;
 
-@Disabled
 public class DocumentBuilderFactoryXXETest implements RewriteTest{
 
     @Override
@@ -90,13 +89,13 @@ public class DocumentBuilderFactoryXXETest implements RewriteTest{
     }
 
     @Test
-    @Disabled("Temporarily")
     void factoryIsVulnerable() {
         //language=java
         rewriteRun(
           java(
             """
               import javax.xml.parsers.DocumentBuilderFactory;
+              import javax.xml.parsers.DocumentBuilder;
               import javax.xml.parsers.ParserConfigurationException; // catching unsupported features
               import javax.xml.XMLConstants;
               
@@ -107,11 +106,13 @@ public class DocumentBuilderFactoryXXETest implements RewriteTest{
               """,
             """
               import javax.xml.parsers.DocumentBuilderFactory;
+              import javax.xml.parsers.DocumentBuilder;
               import javax.xml.parsers.ParserConfigurationException; // catching unsupported features
               import javax.xml.XMLConstants;
               
               class myDBFReader {
                   DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+                  
                   {
                       String FEATURE = "http://apache.org/xml/features/disallow-doctype-decl";
                       try {
@@ -120,6 +121,7 @@ public class DocumentBuilderFactoryXXETest implements RewriteTest{
                           throw new IllegalStateException("ParserConfigurationException was thrown. The feature '"
                                   + FEATURE + "' is not supported by your XML processor.", e);
                       }
+
                   }
                   DocumentBuilder safebuilder = dbf.newDocumentBuilder();
               }
@@ -146,58 +148,6 @@ public class DocumentBuilderFactoryXXETest implements RewriteTest{
                           dbf.setFeature(feature, true);
                       } catch (ParserConfigurationException e) {
                           throw new IllegalStateException("ParserConfigurationException was thrown. The feature is not supported by your XML processor.", e);
-                      }
-                  }
-                  DocumentBuilder safebuilder = dbf.newDocumentBuilder();
-              }
-              """
-          )
-        );
-    }
-
-    @Test
-    @Disabled("Temporarily")
-    void factoryIsVulnerableButNeedsDTDs() {
-        //language=java
-        rewriteRun(
-          java(
-            """
-              import javax.xml.parsers.DocumentBuilderFactory;
-              import javax.xml.parsers.ParserConfigurationException; // catching unsupported features
-              import javax.xml.XMLConstants;
-              
-              class myDBFReader {
-                  DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-                  DocumentBuilder safebuilder = dbf.newDocumentBuilder();
-              }
-              """,
-            """
-              import javax.xml.parsers.DocumentBuilderFactory;
-              import javax.xml.parsers.ParserConfigurationException; // catching unsupported features
-              import javax.xml.XMLConstants;
-              
-              class myDBFReader {
-                  DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-                  {
-                      String feature = null;
-                      try {
-                          feature = "http://apache.org/xml/features/disallow-doctype-decl";
-                          dbf.setFeature(feature, true);
-                          
-                          feature = "http://xml.org/sax/features/external-parameter-entities";
-                          dbf.setFeature(feature, false);
-                          
-                          feature = "http://apache.org/xml/features/nonvalidating/load-external-dtd";
-                          dbf.setFeature(feature, false);
-                          
-                          dbf.setXIncludeAware(false);
-                          dbf.setExpandEntityReferences(false);
-                          
-                          dbf.setFeature(XMLConstants.feature_SECURE_PROCESSING, true);
-                          
-                      } catch (ParserConfigurationException e) {
-                          throw new IllegalStateException("ParserConfigurationException was thrown. The feature '"
-                                  + feature + "' is not supported by your XML processor.", e);
                       }
                   }
                   DocumentBuilder safebuilder = dbf.newDocumentBuilder();
@@ -259,7 +209,7 @@ public class DocumentBuilderFactoryXXETest implements RewriteTest{
     }
 
     @Test
-    @Disabled("Temporarily")
+//    @Disabled("Temporarily")
     void factoryIsVulnerableWithPublicAndSystemIdPresent() {
         rewriteRun(
           xml(
@@ -282,6 +232,7 @@ public class DocumentBuilderFactoryXXETest implements RewriteTest{
           java(
             """
               import javax.xml.parsers.DocumentBuilderFactory;
+              import javax.xml.parsers.DocumentBuilder;
               import javax.xml.parsers.ParserConfigurationException; // catching unsupported features
               import javax.xml.XMLConstants;
               
@@ -291,12 +242,14 @@ public class DocumentBuilderFactoryXXETest implements RewriteTest{
               }
               """,
             """
-              import org.xml.sax.SAXException;import javax.xml.parsers.DocumentBuilderFactory;
+              import javax.xml.parsers.DocumentBuilderFactory;
+              import javax.xml.parsers.DocumentBuilder;
               import javax.xml.parsers.ParserConfigurationException; // catching unsupported features
               import javax.xml.XMLConstants;
               
               class myDBFReader {
                   DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+                  
                   {
                       String FEATURE = null;
                       try {
@@ -318,6 +271,7 @@ public class DocumentBuilderFactoryXXETest implements RewriteTest{
                           throw new IllegalStateException("The feature '"
                                   + FEATURE + "' is not supported by your XML processor.", e);
                       }
+
                   }
                   DocumentBuilder safebuilder = dbf.newDocumentBuilder();
               }
