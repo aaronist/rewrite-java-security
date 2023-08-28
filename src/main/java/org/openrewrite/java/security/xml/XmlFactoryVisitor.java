@@ -15,16 +15,14 @@
  */
 package org.openrewrite.java.security.xml;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.openrewrite.Cursor;
 import org.openrewrite.analysis.InvocationMatcher;
+import org.openrewrite.analysis.trait.expr.VarAccess;
 import org.openrewrite.java.JavaIsoVisitor;
 import org.openrewrite.java.tree.J;
 import org.openrewrite.java.tree.TypeUtils;
-
-import java.util.Collections;
 
 @RequiredArgsConstructor
 @Getter
@@ -51,7 +49,7 @@ public abstract class XmlFactoryVisitor<P> extends JavaIsoVisitor<P> {
             Cursor maybeParentAssignment = getCursor().dropParentUntil(c -> c instanceof J.Assignment || c instanceof J.ClassDeclaration);
             if (parentVariable != null) {
                 if (TypeUtils.isOfClassType(parentVariable.getType(), factoryFqn)) {
-                    XmlFactoryVariable factoryVariable = new XmlFactoryVariable(
+                    XmlFactoryVariable factoryVariable = XmlFactoryVariable.from(
                             parentVariable.getSimpleName(),
                             getCursor().firstEnclosingOrThrow(J.VariableDeclarations.class).getModifiers()
                     );
@@ -62,9 +60,10 @@ public abstract class XmlFactoryVisitor<P> extends JavaIsoVisitor<P> {
                 if (TypeUtils.isOfClassType(parentAssignment.getVariable().getType(), factoryFqn)) {
                     if (parentAssignment.getVariable().unwrap() instanceof J.Identifier) {
                         J.Identifier ident = (J.Identifier) parentAssignment.getVariable().unwrap();
+                        VarAccess v = VarAccess.viewOf(new Cursor(maybeParentAssignment, ident)).success();
                         XmlFactoryVariable factoryVariable = new XmlFactoryVariable(
                                 ident.getSimpleName(),
-                                Collections.emptyList()
+                                v.getVariable().getFlags()
                         );
                         addMessage(factoryVariableName, factoryVariable);
                     }

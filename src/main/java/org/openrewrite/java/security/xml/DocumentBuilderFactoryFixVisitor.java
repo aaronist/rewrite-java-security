@@ -16,7 +16,6 @@
 package org.openrewrite.java.security.xml;
 
 import fj.data.Option;
-import lombok.AllArgsConstructor;
 import org.openrewrite.Cursor;
 import org.openrewrite.ExecutionContext;
 import org.openrewrite.Preconditions;
@@ -29,12 +28,10 @@ import org.openrewrite.analysis.trait.expr.Expr;
 import org.openrewrite.analysis.trait.expr.Literal;
 import org.openrewrite.analysis.trait.expr.VarAccess;
 import org.openrewrite.analysis.trait.variable.Variable;
-import org.openrewrite.java.JavaIsoVisitor;
 import org.openrewrite.java.MethodMatcher;
 import org.openrewrite.java.search.UsesType;
 import org.openrewrite.java.tree.Expression;
 import org.openrewrite.java.tree.J;
-import org.openrewrite.java.tree.TypeUtils;
 
 import java.util.Arrays;
 import java.util.List;
@@ -72,7 +69,6 @@ public class DocumentBuilderFactoryFixVisitor<P> extends XmlFactoryVisitor<P> {
                 acc
         );
     }
-
 
     private static final class DBFArgumentsSpec extends DataFlowSpec {
         @Override
@@ -125,7 +121,7 @@ public class DocumentBuilderFactoryFixVisitor<P> extends XmlFactoryVisitor<P> {
         Dataflow.startingAt(getCursor()).findSinks(new DBFArgumentsSpec()).forEach(sink -> {
             Option<String> featureName = DataFlowNode.of(getCursor()).bind(n -> findFeatureName(n));
             sink.getSinkCursors().forEach(sinkCursor -> {
-                sinkCursor.putMessageOnFirstEnclosing(J.ClassDeclaration.class, featureName.some(), sinkCursor.dropParentUntil(J.Block.class::isInstance));
+                addMessage(featureName.some(), sinkCursor.dropParentUntil(J.Block.class::isInstance));
             });
         });
         return super.visitExpression(expression, p);
@@ -133,39 +129,39 @@ public class DocumentBuilderFactoryFixVisitor<P> extends XmlFactoryVisitor<P> {
 
     @Override
     public J.ClassDeclaration visitClassDeclaration(J.ClassDeclaration classDecl, P ctx) {
-
-
         J.ClassDeclaration cd = super.visitClassDeclaration(classDecl, ctx);
-        Cursor initializationCursor = getCursor().getMessage(DBF_INITIALIZATION_METHOD);
-        XmlFactoryVariable dbfFactoryVariable = getCursor().getMessage(DBF_VARIABLE_NAME);
+        for (int i = 1; i <= getCount(); i++) {
+            Cursor initializationCursor = getCursor().getMessage(DBF_INITIALIZATION_METHOD + i);
+            XmlFactoryVariable dbfFactoryVariable = getCursor().getMessage(DBF_VARIABLE_NAME + i);
 
-        Cursor disallowedDTDTrueCursor = getCursor().getMessage(DISALLOW_DOCTYPE_DECLARATIONS);
-        Cursor generalEntitiesDisabledCursor = getCursor().getMessage(DISABLE_GENERAL_ENTITIES);
-        Cursor parameterEntitiesDisabledCursor = getCursor().getMessage(DISABLE_PARAMETER_ENTITIES);
-        Cursor loadExternalDTDCursor = getCursor().getMessage(LOAD_EXTERNAL_DTD);
+            Cursor disallowedDTDTrueCursor = getCursor().getMessage(DISALLOW_DOCTYPE_DECLARATIONS + i);
+            Cursor generalEntitiesDisabledCursor = getCursor().getMessage(DISABLE_GENERAL_ENTITIES + i);
+            Cursor parameterEntitiesDisabledCursor = getCursor().getMessage(DISABLE_PARAMETER_ENTITIES + i);
+            Cursor loadExternalDTDCursor = getCursor().getMessage(LOAD_EXTERNAL_DTD + i);
 
-        Cursor setPropertyBlockCursor = null;
-        if (disallowedDTDTrueCursor == null) {
-            setPropertyBlockCursor = initializationCursor;
+            Cursor setPropertyBlockCursor = null;
+            if (disallowedDTDTrueCursor == null) {
+                setPropertyBlockCursor = initializationCursor;
 
-        } else if (disallowedDTDTrueCursor != null) {
-            setPropertyBlockCursor = disallowedDTDTrueCursor;
-        }
-        if (setPropertyBlockCursor != null && dbfFactoryVariable != null) {
-            doAfterVisit(new DBFInsertPropertyStatementVisitor<>(
-                    setPropertyBlockCursor.getValue(),
-                    dbfFactoryVariable,
-                    getAcc().getExternalDTDs().isEmpty(),
-                    disallowedDTDTrueCursor == null,
-                    generalEntitiesDisabledCursor == null,
-                    parameterEntitiesDisabledCursor == null,
-                    loadExternalDTDCursor == null
-            ));
+            } else if (disallowedDTDTrueCursor != null) {
+                setPropertyBlockCursor = disallowedDTDTrueCursor;
+            }
+            if (setPropertyBlockCursor != null && dbfFactoryVariable != null) {
+                doAfterVisit(new DBFInsertPropertyStatementVisitor<>(
+                        setPropertyBlockCursor.getValue(),
+                        dbfFactoryVariable,
+                        getAcc().getExternalDTDs().isEmpty(),
+                        disallowedDTDTrueCursor == null,
+                        generalEntitiesDisabledCursor == null,
+                        parameterEntitiesDisabledCursor == null,
+                        loadExternalDTDCursor == null
+                ));
+            }
         }
         return cd;
     }
 
     public static TreeVisitor<?, ExecutionContext> create(ExternalDTDAccumulator acc) {
-        return Preconditions.check(new UsesType<>(DBF_FQN, true), new DocumentBuilderFactoryFixVisitor<ExecutionContext>(acc));
+        return Preconditions.check(new UsesType<>(DBF_FQN, true), new DocumentBuilderFactoryFixVisitor<>(acc));
     }
 }

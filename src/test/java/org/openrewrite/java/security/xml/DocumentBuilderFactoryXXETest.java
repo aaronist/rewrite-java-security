@@ -15,7 +15,6 @@
  */
 package org.openrewrite.java.security.xml;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.openrewrite.java.security.XmlParserXXEVulnerability;
 import org.openrewrite.test.RecipeSpec;
@@ -277,7 +276,5 @@ public class DocumentBuilderFactoryXXETest implements RewriteTest{
               """
           )
         );
-
     }
-
 }

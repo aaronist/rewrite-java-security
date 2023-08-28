@@ -16,16 +16,25 @@
 package org.openrewrite.java.security.xml;
 
 import lombok.Value;
+import org.openrewrite.analysis.util.FlagUtil;
+import org.openrewrite.java.tree.Flag;
 import org.openrewrite.java.tree.J;
 
-import java.util.List;
+import java.util.Collection;
 
 @Value
 public class XmlFactoryVariable {
     String variableName;
-    List<J.Modifier> modifiers;
+    Collection<Flag> flags;
 
     boolean isStatic() {
-        return modifiers.stream().map(J.Modifier::getType).anyMatch(J.Modifier.Type.Static::equals);
+        return flags.stream().anyMatch(Flag.Static::equals);
+    }
+
+    static XmlFactoryVariable from(String variableName, Collection<J.Modifier> modifiers) {
+        return new XmlFactoryVariable(
+                variableName,
+                FlagUtil.fromModifiers(modifiers)
+        );
     }
 }
