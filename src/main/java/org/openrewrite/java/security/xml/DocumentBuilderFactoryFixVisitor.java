@@ -61,8 +61,6 @@ public class DocumentBuilderFactoryFixVisitor<P> extends XmlFactoryVisitor<P> {
     private static final String SET_EXPAND_ENTITY_REFERENCES_PROPERTY_NAME = "setExpandEntityReferences";
     private static final String FEATURE_SECURE_PROCESSING_PROPERTY_NAME = "FEATURE_SECURE_PROCESSING";
     private static final String DBF_INITIALIZATION_METHOD = "dbf-initialization-method";
-    private static final String DISALLOWED_DTD_TRUE_MESSAGE = "DTD_DISALLOWED";
-    private static final String DISALLOWED_DTD_FALSE_MESSAGE = "DTD_ALLOWED";
     private static final String DBF_VARIABLE_NAME = "dbf-variable-name";
 
     DocumentBuilderFactoryFixVisitor(ExternalDTDAccumulator acc) {
@@ -87,14 +85,6 @@ public class DocumentBuilderFactoryFixVisitor<P> extends XmlFactoryVisitor<P> {
             return DBF_PARSER_SET_FEATURE.advanced().isFirstParameter(sinkNode.getCursor());
         }
     }
-
-//                MethodAccess.Factory.F.firstEnclosingViewOf(sinkNode.getCursor()).toOption()
-//                    .filter(ma -> ma.matches(DBF_PARSER_SET_FEATURE))
-//                    .filter(ma -> ma.getArguments().get(1) instanceof Literal)
-//                    .map(ma -> (Literal) ma.getArguments().get(1))
-//                    .bind(Literal::getValue)
-//                    .map(Boolean.TRUE::equals)
-//                    .isSome();
 
     private static Option<String> findFeatureName(DataFlowNode node) {
         return node
@@ -146,20 +136,13 @@ public class DocumentBuilderFactoryFixVisitor<P> extends XmlFactoryVisitor<P> {
 
 
         J.ClassDeclaration cd = super.visitClassDeclaration(classDecl, ctx);
-//        Cursor supportsExternalCursor = getCursor().getMessage(SUPPORTING_EXTERNAL_ENTITIES_PROPERTY_NAME);
-//        Cursor supportsFalseDTDCursor = getCursor().getMessage(SUPPORT_DTD_FALSE_PROPERTY_NAME);
-//        Cursor supportsDTDTrueCursor = getCursor().getMessage(SUPPORT_DTD_TRUE_PROPERTY_NAME);
         Cursor initializationCursor = getCursor().getMessage(DBF_INITIALIZATION_METHOD);
         XmlFactoryVariable dbfFactoryVariable = getCursor().getMessage(DBF_VARIABLE_NAME);
-//        Cursor xmlResolverMethod = getCursor().getMessage(XML_RESOLVER_METHOD);
 
         Cursor disallowedDTDTrueCursor = getCursor().getMessage(DISALLOW_DOCTYPE_DECLARATIONS);
         Cursor generalEntitiesDisabledCursor = getCursor().getMessage(DISABLE_GENERAL_ENTITIES);
         Cursor parameterEntitiesDisabledCursor = getCursor().getMessage(DISABLE_PARAMETER_ENTITIES);
         Cursor loadExternalDTDCursor = getCursor().getMessage(LOAD_EXTERNAL_DTD);
-
-
-//        Cursor disallowedDTDFalseCursor = getCursor().getMessage(DISALLOWED_DTD_FALSE_MESSAGE);
 
         Cursor setPropertyBlockCursor = null;
         if (disallowedDTDTrueCursor == null) {

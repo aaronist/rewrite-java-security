@@ -209,7 +209,6 @@ public class DocumentBuilderFactoryXXETest implements RewriteTest{
     }
 
     @Test
-//    @Disabled("Temporarily")
     void factoryIsVulnerableWithPublicAndSystemIdPresent() {
         rewriteRun(
           xml(
